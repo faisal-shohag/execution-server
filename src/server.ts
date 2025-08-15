@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { Server } from "http";
 import app from './app'
 let server: Server;

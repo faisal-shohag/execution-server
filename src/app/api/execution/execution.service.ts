@@ -1,14 +1,7 @@
 import { createContext, Script } from 'vm';
+import { ExecutionResult, TestCase } from './execution.interface';
 
-interface TestCase {
-    input?: string;
-    expectedOutput?: any;
-}
 
-interface ExecutionResult {
-    result: any;
-    stdout: string[];
-}
 
 /**
  * Executes user-provided code against a single test case in a sandboxed environment.
@@ -27,7 +20,7 @@ export const executeCode = (
     return new Promise((resolve, reject) => {
         const stdout: string[] = [];
         const customConsole = {
-            log: (...args: any[]) => {
+            log: (...args:[]) => {
                 const output = args
                     .map((arg) => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg)))
                     .join(' ');
