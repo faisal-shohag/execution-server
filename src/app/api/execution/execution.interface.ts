@@ -16,6 +16,7 @@ export interface Output {
     stdout: string[]
     yourOutput: string
     runtime: number
-    memoryUsed: number
+    memoryUsed: number,
+    lineNumber?: number|null
 
 }

@@ -24,7 +24,8 @@ export const handleSubmission = async (req, res) => {
   if (!functionExistsRegex.test(code)) {
     return res.status(400).json({
       status: "Compilation Error",
-      error: `Function '${func}' not found in the provided code. Please ensure the function is defined correctly.`,
+      error: `Function '${func}' not found in the provided code. Please ensure t
+      he function is defined correctly.`,
     });
   }
 
@@ -96,40 +97,47 @@ export const handleSubmission = async (req, res) => {
         break;
       }
     } catch (error) {
-      let errorStatus = "Runtime Error";
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+       let errorStatus = "Runtime Error";
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            let lineNumber:number|null = null;
 
-      if (error instanceof Error) {
-        if (error.message.includes("SyntaxError")) {
-          errorStatus = "Compilation Error";
-        } else if (
-          error.message.includes("Script execution timed out") ||
-          error.message.includes("Maximum console output")
-        ) {
-          errorStatus = "Time Limit Exceeded";
-        }
-      }
+            // Attempt to parse the line number from the error's stack trace
+            if (error instanceof Error && error.stack) {
+                // This regex looks for the pattern '<anonymous>:<line>:<column>' in the stack trace
+                const stackMatch = error.stack.match(/<anonymous>:(\d+):(\d+)/);
+                if (stackMatch && stackMatch[1]) {
+                    // The first captured group is the line number
+                    lineNumber = parseInt(stackMatch[1], 10);
+                }
+            }
 
-      if (overallStatus === "Accepted") {
-        overallStatus = errorStatus;
-      }
+            if (error instanceof Error) {
+                if (error.message.includes('SyntaxError')) {
+                    errorStatus = "Compilation Error";
+                } else if (error.message.includes('Script execution timed out') || error.message.includes('Maximum console output')) {
+                    errorStatus = "Time Limit Exceeded";
+                }
+            }
 
-      output.push({
-        error: errorMessage,
-        output: String(testCase.output),
-        status: "failed",
-        stderr: error instanceof Error ? error.stack || "" : "",
-        stdout: [],
-        yourOutput: "",
-        runtime: timeLimit,
-        memoryUsed: 0,
-      });
+            if (overallStatus === "Accepted") {
+                overallStatus = errorStatus;
+            }
 
-      // For 'submit' action, stop at the first error
-      if (action === "submit") {
-        break;
-      }
+            output.push({
+                error: errorMessage,
+                output: String(testCase.output),
+                status: "failed",
+                stderr: error instanceof Error ? error.stack || "" : "",
+                stdout: [],
+                yourOutput: "",
+                runtime: timeLimit,
+                memoryUsed: 0,
+                lineNumber: lineNumber, // Include the found line number
+            });
+
+            // An error occurred, so stop processing the rest of the test cases.
+            break;
+
     }
   }
 
